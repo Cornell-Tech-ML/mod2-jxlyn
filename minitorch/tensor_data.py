@@ -44,9 +44,11 @@ def index_to_position(index: Index, strides: Strides) -> int:
         Position in storage
 
     """
-    # TODO: Implement for Task 2.1.
-    raise NotImplementedError("Need to implement for Task 2.1")
-
+    assert len(index) == len(strides)
+    position = 0
+    for i, stride in zip(index, strides):
+        position += i * stride
+    return position
 
 def to_index(ordinal: int, shape: Shape, out_index: OutIndex) -> None:
     """Convert an `ordinal` to an index in the `shape`.
@@ -60,9 +62,14 @@ def to_index(ordinal: int, shape: Shape, out_index: OutIndex) -> None:
         out_index : return index corresponding to position.
 
     """
-    # TODO: Implement for Task 2.1.
-    raise NotImplementedError("Need to implement for Task 2.1")
+    remaining_ordinal = ordinal  # Use a more descriptive variable name
 
+    for dimension, size in enumerate(shape):
+        remaining_product = prod(shape[dimension:])
+        current_divisor = remaining_product / size
+        current_index = int(remaining_ordinal // current_divisor)
+        remaining_ordinal -= current_index * current_divisor
+        out_index[dimension] = current_index
 
 def broadcast_index(
     big_index: Index, big_shape: Shape, shape: Shape, out_index: OutIndex
@@ -83,8 +90,11 @@ def broadcast_index(
         None
 
     """
-    # TODO: Implement for Task 2.2.
-    raise NotImplementedError("Need to implement for Task 2.2")
+    for i in range(len(shape)):
+        if shape[i] > 1:
+            out_index[i] = big_index[len(big_shape) - len(shape) + i]
+        else:
+            out_index[i] = 0
 
 
 def shape_broadcast(shape1: UserShape, shape2: UserShape) -> UserShape:
@@ -101,8 +111,27 @@ def shape_broadcast(shape1: UserShape, shape2: UserShape) -> UserShape:
         IndexingError : if cannot broadcast
 
     """
-    # TODO: Implement for Task 2.2.
-    raise NotImplementedError("Need to implement for Task 2.2")
+    # Determine the length of the new shape
+    max_len = max(len(shape1), len(shape2))
+
+    # Pad the shorter shape with 1s on the left to match lengths
+    padded_shape1 = [1] * (max_len - len(shape1)) + list(shape1)
+    padded_shape2 = [1] * (max_len - len(shape2)) + list(shape2)
+
+    result_shape = []
+
+    # Apply broadcasting rules to create the resulting shape
+    for dim1, dim2 in zip(padded_shape1, padded_shape2):
+        if dim1 == dim2:
+            result_shape.append(dim1)
+        elif dim1 == 1:
+            result_shape.append(dim2)
+        elif dim2 == 1:
+            result_shape.append(dim1)
+        else:
+            raise IndexingError(f"Cannot broadcast shapes {shape1} and {shape2}.")
+
+    return tuple(result_shape)
 
 
 def strides_from_shape(shape: UserShape) -> UserStrides:
@@ -231,8 +260,10 @@ class TensorData:
             range(len(self.shape))
         ), f"Must give a position to each dimension. Shape: {self.shape} Order: {order}"
 
-        # TODO: Implement for Task 2.1.
-        raise NotImplementedError("Need to implement for Task 2.1")
+        return TensorData(
+            self._storage,
+            tuple(self.shape[x] for x in order),
+            tuple(self.strides[x] for x in order))
 
     def to_string(self) -> str:
         """Convert to string"""

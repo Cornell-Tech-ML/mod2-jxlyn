@@ -12,6 +12,8 @@ from hypothesis.strategies import (
 )
 
 import minitorch
+from minitorch.operators import is_close
+
 from minitorch import Tensor, TensorBackend, TensorData, UserIndex, UserShape
 
 from .strategies import small_ints
