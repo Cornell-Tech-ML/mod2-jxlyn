@@ -29,17 +29,16 @@ RATE = 0.5
 ## Simple dataset:
 
 Number of epochs: 250
-
-![alt text](<Screen Shot 2024-10-21 at 10.34.34 PM.png>)
-_![alt text](<Screen Shot 2024-10-21 at 10.35.46 PM.png>)
-
+![alt text](<Screen Shot 2024-10-22 at 12.32.16 AM.png>)
+![alt text](<Screen Shot 2024-10-22 at 12.32.52 AM.png>)
+![alt text](<Screen Shot 2024-10-22 at 12.35.35 AM.png>)
 
 ## Diag dataset:
 
 Number of epochs: 250
-
-![alt text](<Screen Shot 2024-10-21 at 10.38.26 PM.png>)
-![alt text](<Screen Shot 2024-10-21 at 10.38.42 PM.png>)
+![alt text](<Screen Shot 2024-10-22 at 12.29.22 AM.png>)
+![alt text](<Screen Shot 2024-10-22 at 12.29.33 AM.png>)
+![alt text](<Screen Shot 2024-10-22 at 12.29.45 AM.png>)
 
 
 ## Split dataset:
