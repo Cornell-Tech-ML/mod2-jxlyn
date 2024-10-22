@@ -12,6 +12,7 @@ from hypothesis.strategies import (
 )
 
 import minitorch
+
 from minitorch import Tensor, TensorBackend, TensorData, UserIndex, UserShape
 
 from .strategies import small_ints
