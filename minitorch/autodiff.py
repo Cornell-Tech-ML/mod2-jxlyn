@@ -25,12 +25,23 @@ def central_difference(f: Any, *vals: Any, arg: int = 0, epsilon: float = 1e-6) 
         An approximation of $f'_i(x_0, \ldots, x_{n-1})$
 
     """
-    vals1 = [v for v in vals]
-    vals2 = [v for v in vals]
-    vals1[arg] = vals1[arg] + epsilon
-    vals2[arg] = vals2[arg] - epsilon
-    delta = f(*vals1) - f(*val2)
-    return delta / (2*epsilon)
+    if not (0 <= arg < len(vals)):
+        raise ValueError(
+            f"Invalid arg index {arg}, must be between 0 and {len(vals) - 1}"
+        )
+
+    vals_positive = list(vals)
+    vals_negative = list(vals)
+
+    vals_positive[arg] += epsilon
+    vals_negative[arg] -= epsilon
+
+    f_positive = f(*vals_positive)
+    f_negative = f(*vals_negative)
+
+    derivative = (f_positive - f_negative) / (2 * epsilon)
+    return derivative
+
 
 variable_count = 1
 
@@ -120,20 +131,20 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
 
     """
     # TODO: Implement for Task 1.4.
-    order: List[Variable] = []
-    seen = set()
+    visited: Set[Variable] = set()
+    topo_order: List[Variable] = []
 
-    def visit(var: Variable) -> None:
-        if var.unique_id in seen or var.is_constant:
-            return
-        if not var.is_leaf():
-            for parent in var.parents:
-                if not parent.is_constant():
-                    visit(parent)
-        seen.add(var.unique_id)
-        order.insert(0, var)
-    visit(variable)
-    return order
+    def dfs(var: Variable) -> None:
+        if var not in visited:
+            visited.add(var)
+            # Only traverse the parents if the variable is not a constant
+            if not var.is_constant():
+                for parent in var.parents:
+                    dfs(parent)
+                topo_order.append(var)
+
+    dfs(variable)
+    return reversed(topo_order)
 
 
 def backpropagate(variable: Variable, deriv: Any) -> None:
@@ -151,19 +162,23 @@ def backpropagate(variable: Variable, deriv: Any) -> None:
 
     """
     # TODO: Implement for Task 1.4.
-    queue = topological_sort(variable)
-    derivatives = {}
-    derivatives[variable.unique_id] = deriv
-    for var in queue:
-        deriv = derivatives[var.unique_id]
+    topo_order = topological_sort(variable)
+    var_to_derivative = {variable: deriv}
+
+    # Traverse the variables in topological order
+    for var in topo_order:
+        d_output = var_to_derivative.get(var, 0)  # Get the current derivative
+
+        # If the variable is a leaf, accumulate the derivative
         if var.is_leaf():
-            var.accumulate_derivative(deriv)
+            var.accumulate_derivative(d_output)
         else:
-            for v, d in var.chain_rule(deriv):
-                if v.is_constant():
-                    continue
-                derivatives.setdefault(v.unique_id,0.0)
-                derivatives[v.unique_id] = derivatives[v.unique_id] + d
+            # Otherwise, apply the chain rule to propagate derivatives to parents
+            for parent, gradient in var.chain_rule(d_output):
+                if parent in var_to_derivative:
+                    var_to_derivative[parent] += gradient  # Accumulate the derivative
+                else:
+                    var_to_derivative[parent] = gradient  # Initialize derivative
 
 
 @dataclass

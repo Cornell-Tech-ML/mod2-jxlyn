@@ -182,7 +182,7 @@ def log(x: float) -> float:
         float: The natural logarithm of x.
 
     """
-    return math.log(x+1e-6)
+    return math.log(x)
 
 
 def exp(x: float) -> float:
@@ -228,7 +228,7 @@ def inv(x: float) -> float:
         float: The inverse of x.
 
     """
-    return 1 / x
+    return 1.0 / x
 
 
 def inv_back(x: float, b: float) -> float:
@@ -314,6 +314,7 @@ def zipWith(
     """
     return [fn(x, y) for x, y in zip(xs, ys)]
 
+
 def reduce(
     fn: Callable[[float, float], float], xs: Iterable[float], init: float
 ) -> float:
@@ -334,6 +335,7 @@ def reduce(
     for x in xs:
         acc = fn(acc, x)
     return acc
+
 
 def negList(xs: Iterable[float]) -> Iterable[float]:
     """Negate a list of floats.

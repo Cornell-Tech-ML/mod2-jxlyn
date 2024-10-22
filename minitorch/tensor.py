@@ -95,9 +95,32 @@ class Tensor:
         self.f = backend
 
     def requires_grad_(self, x: bool) -> None:
+        """Intialize self.history
+
+        Args:
+        ----
+            x : bool
+                True if the tensor requires grad
+
+        Returns:
+        -------
+            None
+
+        """
         self.history = History()
 
     def requires_grad(self) -> bool:
+        """Returns True if the tensor requires grad
+
+        Args:
+        ----
+            None
+
+        Returns:
+        -------
+            bool
+
+        """
         return self.history is not None
 
     def to_numpy(self) -> npt.NDArray[np.float64]:
@@ -194,6 +217,19 @@ class Tensor:
         # END CODE CHANGE (2021)
 
     def zeros(self, shape: Optional[UserShape] = None) -> Tensor:
+        """Create a new tensor of zeros with the same shape as this tensor.
+
+        Args:
+        ----
+            shape : tuple
+
+
+        Returns:
+        -------
+            Tensor
+
+        """
+
         def zero(shape: UserShape) -> Tensor:
             return Tensor.make(
                 [0.0] * int(operators.prod(shape)), shape, backend=self.backend
@@ -239,14 +275,47 @@ class Tensor:
         return self.history is not None and self.history.last_fn is None
 
     def is_constant(self) -> bool:
+        """True if this variable is a constant (no gradient required)
+
+        Args:
+        ----
+            None
+
+        Returns:
+        -------
+            bool
+
+        """
         return self.history is None
 
     @property
     def parents(self) -> Iterable[Variable]:
+        """Returns the parents of this variable in the computation graph.
+
+        Args:
+        ----
+            None
+
+        Returns:
+        -------
+            Iterable[Variable]
+
+        """
         assert self.history is not None
         return self.history.inputs
 
     def chain_rule(self, d_output: Any) -> Iterable[Tuple[Variable, Any]]:
+        """Compute the chain rule of this variable with respect to the output.
+
+        Args:
+        ----
+            d_output : Any (derivative of the output)
+
+        Returns:
+        -------
+            Iterable[Tuple[Variable, Any]]
+
+        """
         h = self.history
         assert h is not None
         assert h.last_fn is not None
@@ -260,6 +329,17 @@ class Tensor:
         ]
 
     def backward(self, grad_output: Optional[Tensor] = None) -> None:
+        """Backpropagate gradients through the computation graph.
+
+        Args:
+        ----
+            grad_output : Tensor
+
+        Returns:
+        -------
+            None
+
+        """
         if grad_output is None:
             assert self.shape == (1,), "Must provide grad_output if non-scalar"
             grad_output = Tensor.make([1.0], (1,), backend=self.backend)
@@ -320,51 +400,160 @@ class Tensor:
         return Add.apply(self._ensure_tensor(b), self)
 
     def __rmul__(self, b: TensorLike) -> Tensor:
-            return Mul.apply(self._ensure_tensor(b), self)
+        return Mul.apply(self._ensure_tensor(b), self)
 
     def sum(self, dim: Optional[int] = None) -> Tensor:
+        """Sum the tensor over a dimension.
+
+        Args:
+        ----
+            dim : int (optional)
+
+        Returns:
+        -------
+            Tensor
+
+        """
         if dim is None:
             return Sum.apply(self.contiguous().view(self.size), self._ensure_tensor(0))
         else:
             return Sum.apply(self, self._ensure_tensor(dim))
 
     def all(self, dim: Optional[int] = None) -> Tensor:
+        """Check if all elements are true over a dimension.
+
+        Args:
+        ----
+            dim : int (optional)
+
+        Returns:
+        -------
+            Tensor
+
+        """
         if dim is None:
             return All.apply(self.view(self.size), self._ensure_tensor(0))
         else:
             return All.apply(self, self._ensure_tensor(dim))
 
     def is_close(self, other: Tensor) -> Tensor:
+        """Check if all elements are close to another tensor.
+
+        Args:
+        ----
+            other : Tensor
+
+        Returns:
+        -------
+            Tensor
+
+        """
         return IsClose.apply(self, self._ensure_tensor(other))
 
     def mean(self, dim: Optional[int] = None) -> Tensor:
-        if dim is not None:
-            return self.sum(dim) / self.shape[dim]
-        else:
+        """Compute the mean of the tensor over a dimension.
+
+        Args:
+        ----
+            dim : int (optional)
+
+        Returns:
+        -------
+            Tensor
+
+        """
+        if dim is None:
             return self.sum() / self.size
+        else:
+            return self.sum(dim) / self.shape[dim]
 
     def sigmoid(self) -> Tensor:
+        """Apply the sigmoid function elementwise.
+
+        Args:
+        ----
+            None
+
+        Returns:
+        -------
+            Tensor
+
+        """
         return Sigmoid.apply(self)
 
     def relu(self) -> Tensor:
+        """Apply the ReLU function elementwise.
+
+        Args:
+        ----
+            None
+
+        Returns:
+        -------
+            Tensor
+
+        """
         return ReLU.apply(self)
 
     def log(self) -> Tensor:
+        """Apply the natural log elementwise.
+
+        Args:
+        ----
+            None
+
+        Returns:
+        -------
+            Tensor
+
+        """
         return Log.apply(self)
 
     def exp(self) -> Tensor:
+        """Apply the exponential function elementwise.
+
+        Args:
+        ----
+            None
+
+        Returns:
+        -------
+            Tensor
+
+        """
         return Exp.apply(self)
 
-    def permute(self, dim: Optional[int] = None) -> Tensor:
-        if dim is None:
-            return Permute.apply(self)
-        return Permute.apply(self, self._ensure_tensor(dim))
+    def permute(self, *dim: int) -> Tensor:
+        """Permute the dimensions of the tensor.
 
-    def view(self, dim: Optional[int] = None) -> Tensor:
-        if dim is None:
-            return View.apply(self)
-        return View.apply(self, self._ensure_tensor(dim))
+        Args:
+        ----
+            dim : int
+
+        Returns:
+        -------
+            Tensor
+
+        """
+        return Permute.apply(self, tensor(list(dim)))
+
+    def view(self, *dim: int) -> Tensor:
+        """Reshape the tensor.
+
+        Args:
+        ----
+            dim : int
+
+        Returns:
+        -------
+            Tensor
+
+        """
+        return View.apply(self, tensor(list(dim)))
 
     def zero_grad_(self) -> None:
         """Sets the gradient to None."""
         self.grad = None
+
+    def __hash__(self) -> int:
+        return hash((self._tensor.to_string(), self.unique_id))
